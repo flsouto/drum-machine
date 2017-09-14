@@ -58,6 +58,12 @@ class DrumMachine{
 		return $this;
 	}
 
+	function add($id, $sample, $freq=1){
+		$this->samples[$id] = $sample;
+		$this->freqs[$id] = $freq;
+		return $this;
+	}
+
 	function mkseq($size, $pattern='?'){
 
 		$samples = [];
@@ -67,7 +73,6 @@ class DrumMachine{
 				$samples[] = $k;
 			}
 		}
-
 		if(!is_array($pattern)){
 			$pattern = str_split($pattern);
 		}
@@ -98,6 +103,10 @@ class DrumMachine{
 	function compile(){
 		$samples = [];
 		foreach($this->samples as $id => $sample){
+			if($id=='_'){
+				$samples['_'] = Sampler::silence($this->len);
+				continue;
+			}
 			if(is_string($sample)){
 				$samples[$id] = new Sampler($sample);
 				$samples[$id]->cut(0,$this->len);
@@ -129,7 +138,7 @@ class DrumMachine{
 		if($this->ride){
 			$ride = new Sampler($this->ride);
 			$ratio = $this->ride_ratios[array_rand($this->ride_ratios)];
-			$ride->cut(0,$stream->len()/$ratio)->x($ratio);
+			$ride->cut(0,$this->len * $ratio)->x(round(strlen($sequence)/$ratio))->cut(0,$stream->len());
 			$stream->mix($ride, false);
 		}
 		return $stream;
